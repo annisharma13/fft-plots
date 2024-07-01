@@ -140,3 +140,128 @@ np.savetxt('transmission_coefficient.txt', data_to_save, fmt='%.6f', header='Fre
 ### Summary
 
 This script loads time-domain data, performs a Fourier transform to convert it into the frequency domain, calculates the transmission coefficient, filters the data to a specific frequency range, plots the results, and saves the data to a text file.
+
+this is our final code
+Let's break down and explain the provided code in detail, step by step.
+
+### 1 Importing Libraries
+
+```python
+import numpy as np
+from scipy.optimize import fsolve
+import matplotlib.pyplot as plt
+```
+
+Here, we import necessary libraries:
+- `numpy` for numerical operations.
+- `fsolve` from `scipy.optimize` to solve systems of nonlinear equations.
+- `matplotlib.pyplot` for plotting the results.
+
+### 2 Loading and Preparing Data
+
+```python
+data = np.loadtxt('transmission_coefficient.txt')
+
+frequencies = data[:, 0] * 1e12  # Convert THz to Hz
+real_T_calculated = data[:, 1]
+imaginary_T_calculated = data[:, 2]
+```
+
+We load the data from a text file named `'filtered_T_values_upto3.txt'`. The data is assumed to have three columns:
+1. Frequency in THz.
+2. Real part of the calculated transmission coefficient \( T \).
+3. Imaginary part of the calculated transmission coefficient \( T \).
+
+The frequency values are converted from THz to Hz by multiplying by \( 1 \times 10^{12} \).
+
+### 3 Constants
+
+```python
+c = 3e8  # Speed of light in m/s
+l = 1e-3  # Thickness of the sample in m
+```
+
+We define two constants:
+- `c`: Speed of light in vacuum (3 x 10^8 m/s).
+- `l`: Thickness of the sample (1 mm).
+
+### 4 Function to Calculate Analytical Transmission Coefficient
+
+```python
+def T_analytical(ns, w, l, c):
+    term1 = (ns + 1)**2 / (2 * ns)
+    cos_term = np.cos((ns - 1) * w * l / c)
+    sin_term = np.sin((ns - 1) * w * l / c)
+    return term1 * (cos_term - 1j * sin_term)
+```
+
+This function calculates the analytical transmission coefficient \( T_{\text{analytical}} \) for a given refractive index `ns`, angular frequency `w`, sample thickness `l`, and speed of light `c`. It uses the formula:
+
+\[ T_{\text{analytical}} = \frac{(n_s + 1)^2}{2n_s} \left( \cos \left( \frac{(n_s - 1) w l}{c} \right) - i \sin \left( \frac{(n_s - 1) w l}{c} \right) \right) \]
+
+### 5 Function to Solve for Refractive Index
+
+```python
+def equations(ns, real_T_calculated, imaginary_T_calculated, w, l, c):
+    ns_complex = ns[0] + 1j * ns[1]
+    T_anal = T_analytical(ns_complex, w, l, c)
+    real_part_error = T_anal.real - real_T_calculated
+    imaginary_part_error = T_anal.imag - imaginary_T_calculated
+    return [real_part_error, imaginary_part_error]
+```
+
+This function defines the system of equations to solve for the refractive index `ns` by matching the real and imaginary parts of the calculated transmission coefficient with the analytical transmission coefficient. The function returns the difference (error) between the real and imaginary parts of \( T_{\text{analytical}} \) and \( T_{\text{calculated}} \).
+
+### 6 Solving for Refractive Index for Each Data Point
+
+```python
+ns_values = []
+for f, real_T, imag_T in zip(frequencies, real_T_calculated, imaginary_T_calculated):
+    w = 2 * np.pi * f
+    ns_guess = [2.5, -2.5]  # Initial guess
+    ns_solution = fsolve(equations, ns_guess, args=(real_T, imag_T, w, l, c))
+    ns_values.append(ns_solution)
+
+ns_values = np.array(ns_values)
+real_ns = ns_values[:, 0]
+imaginary_ns = ns_values[:, 1]
+```
+
+In this loop, we iterate over each frequency and its corresponding real and imaginary parts of the transmission coefficient. For each data point:
+1. We convert the frequency to angular frequency `w`.
+2. We use `fsolve` to solve the system of equations for the refractive index `ns`, starting with an initial guess of `[2.5, -2.5]`.
+3. The solution `ns_solution` is appended to the list `ns_values`.
+
+After the loop, we convert `ns_values` to a NumPy array and separate the real and imaginary parts of the refractive index into `real_ns` and `imaginary_ns`.
+
+### 7 Plotting the Results
+
+```python
+plt.figure(figsize=(10, 6))
+plt.plot(frequencies / 1e12, real_ns, label='Real part of $n_s$')
+plt.plot(frequencies / 1e12, imaginary_ns, label='Imaginary part of $n_s$')
+plt.xlabel('Frequency (THz)')
+plt.ylabel('Refractive Index $n_s$')
+plt.title('Refractive Index vs Frequency')
+plt.legend()
+plt.grid(True)
+plt.show()
+```
+
+Finally, we plot the real and imaginary parts of the refractive index against the frequency (converted back to THz for better readability). The plot includes labels, a title, a legend, and a grid for better visualization.
+
+### Summary
+
+The code:
+1. Loads the data from a file.
+2. Converts frequencies to Hz.
+3. Defines the analytical model for the transmission coefficient.
+4. Defines a function to solve for the refractive index.
+5. Iterates over the data to find the refractive index for each frequency.
+6. Plots the real and imaginary parts of the refractive index as functions of frequency.
+
+This process allows us to analyze how the refractive index varies with frequency based on the transmission coefficient data.
+
+
+
+
