@@ -1,7 +1,6 @@
 # fft-plots
 This is first code.
-Certainly! Let's break down the provided code step by step:
-
+code 1 and t calculated code can be coded together, here's the explaination of both codes combined and treated as code first.
 ### 1. Loading Data
 
 ```python
@@ -96,4 +95,48 @@ plt.show()
 - `plt.tight_layout()` adjusts the subplots to fit in the figure area neatly.
 - `plt.show()` displays the figure.
 
-In summary, the code loads time-domain signals for quartz and air, computes their FFT to transform them into the frequency domain, and plots both the original time-domain signals and their frequency-domain magnitude spectra.
+
+### 7. Calculate the Transmission Coefficient
+
+```python
+T_calculated = positive_fft_result_qz / positive_fft_result_air
+```
+- The transmission coefficient `T` is calculated by dividing the FFT result of the quartz sample by that of the air sample.
+
+### 8. Select Frequencies Between 0.5 Hz and 3 Hz
+
+```python
+freq_mask = (positive_frequencies_qz >= 0.5) & (positive_frequencies_qz <= 3)
+selected_frequencies = positive_frequencies_qz[freq_mask] * 10**12
+selected_T_calculated = T_calculated[freq_mask]
+```
+- A mask is created to filter frequencies between 0.5 Hz and 3 Hz.
+- The corresponding frequencies and transmission coefficients are selected and converted to THz (terahertz).
+
+### 9. Plot the Results
+
+```python
+plt.figure(figsize=(6, 6))
+plt.plot(selected_frequencies[:len(selected_T_calculated)], selected_T_calculated, label='Transmission Coefficient T', color='red')
+plt.title('Transmission Coefficient T vs Frequency')
+plt.xlabel('Frequency [THz]')
+plt.ylabel('Transmission Coefficient T')
+plt.legend()
+plt.grid(True)
+plt.show()
+```
+- A plot is created with the selected frequencies on the x-axis and the transmission coefficient on the y-axis.
+- The plot is labeled and displayed.
+
+### 10. Save Data to a Text File
+
+```python
+data_to_save = np.column_stack((selected_frequencies[:len(selected_T_calculated)], selected_T_calculated))
+np.savetxt('transmission_coefficient.txt', data_to_save, fmt='%.6f', header='Frequency [Hz]  Transmission Coefficient T')
+```
+- The selected frequencies and transmission coefficients are combined into a single array.
+- This data is saved to a text file named `transmission_coefficient.txt` with a header and specified format.
+
+### Summary
+
+This script loads time-domain data, performs a Fourier transform to convert it into the frequency domain, calculates the transmission coefficient, filters the data to a specific frequency range, plots the results, and saves the data to a text file.
